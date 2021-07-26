@@ -1,0 +1,11 @@
+resource_group_name       = "vm-demo-rg"
+business_unit_group       = "rnd"
+environment               = "dev"
+description               = "VM instance"
+region                    = "eastus2"
+vnet_name                 = "myVnet"
+vnet_address_space        = ["10.0.0.0/16"]
+subnet_name               = "mySubnet"
+subnet_address_prefixes   = ["10.0.1.0/24"]
+admin_ssh_user_name       = "azureuser"
+vm_size                   = "Standard_DS1_v2"

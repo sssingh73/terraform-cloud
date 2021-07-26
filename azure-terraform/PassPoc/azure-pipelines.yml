@@ -1,0 +1,52 @@
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    exclude:
+      - Dev/*
+      - poc/*
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+    - group: TestRelease
+steps:
+- script: echo Hello, world!
+  displayName: 'Run a one-line script'
+
+- script: |
+    # Exit when any command returns a failure status.
+    set -e
+    echo Running terrafrom code for creating RG and App Service!
+    # Write terraform.tfvars.
+    echo 'resource_group_location = "eastus2"' | tee terraform.tfvars
+    # Write backend.tfvars.
+    echo 'resource_group_name = "'$(resource_group_name)'"' | tee backend.tfvars
+    echo 'storage_account_name = "'$(storage_account_name)'"' | tee -a backend.tfvars
+    echo 'container_name = "'$(container_name)'"' | tee -a backend.tfvars
+    echo 'key = "'$(key)'"' | tee -a backend.tfvars
+    # Just for testing
+    cat terraform.tfvars
+    cat backend.tfvars
+    # Initialize Terraform.
+    terraform init -input=false -backend-config="backend.tfvars"
+    terraform validate
+    terraform plan
+    # Apply the Terraform plan.
+    terraform apply -input=false -auto-approve
+
+    # Get the App Service name for the dev environment.
+    WebAppNameDev=$(terraform output website_hostname)
+    echo $WebAppNameDev
+    # Write the WebAppNameDev variable to the pipeline.
+    echo "##vso[task.setvariable variable=WebAppNameDev;isOutput=true]$WebAppNameDev"
+    # terraform destroy -auto-approve
+  name: 'RunTerraform'
+  displayName: 'Run Terraform'
+  env:
+    ARM_CLIENT_ID: $(ARM_CLIENT_ID)
+    ARM_CLIENT_SECRET: $(ARM_CLIENT_SECRET)
+    ARM_TENANT_ID: $(ARM_TENANT_ID)
+    ARM_SUBSCRIPTION_ID: $(ARM_SUBSCRIPTION_ID)
+    ARM_ACCESS_KEY: $(ARM_ACCESS_KEY)
